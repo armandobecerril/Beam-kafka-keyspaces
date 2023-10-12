@@ -1,5 +1,5 @@
 {
-  "inputBroker": "localhost:9092",
+  "inputBroker": "kafka:9094",
   "inputTopic": "enrichment.fct.iovation.v1",
   "cassandraNodes": "cassandra://54.152.221.55:9042",
   "cassandraKeyspace": "iovation_data_source",

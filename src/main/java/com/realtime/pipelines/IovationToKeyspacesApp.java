@@ -1,10 +1,14 @@
 package com.realtime.pipelines;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
-import com.realtime.pipelines.dbconnections.CassandraConnection;
+import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
+import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Statement;
+import com.realtime.utils.FilterEngineToKeyspaces;
+import software.amazon.awssdk.regions.Region;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.realtime.pipelines.dbconnections.KeyspacesConnection;
 import com.realtime.utils.FilterEngineToCassandra;
 import com.realtime.utils.JsonUtils;
 import org.apache.beam.sdk.Pipeline;
@@ -12,6 +16,7 @@ import org.apache.beam.sdk.io.kafka.KafkaIO;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
+import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.transforms.ParDo;
@@ -31,9 +36,9 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class IovationToCassandraApp {
+public class IovationToKeyspacesApp {
 
-        private static final Logger log = LoggerFactory.getLogger(IovationToCassandraApp.class);
+    private static final Logger log = LoggerFactory.getLogger(IovationToCassandraApp.class);
     // Define una interfaz para las opciones personalizadas de tu Pipeline.
     public interface IovationOptions extends PipelineOptions {
         @Description("Path to the config file")
@@ -43,34 +48,33 @@ public class IovationToCassandraApp {
         void setConfigFile(String value);
     }
 
-   /* public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception {
         PipelineOptionsFactory.register(IovationOptions.class);
         IovationOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(IovationOptions.class);
 
         String configFile = options.getConfigFile();
 
         // Log de la configuración utilizada
-        if (configFile.equals("/config/data_pipeline_config.json")) {
+        if (configFile.equals("/config/data_ingest_table2_demo.json")) {
             log.info("Utilizando configuración por defecto desde: {}", configFile);
         } else {
             log.info("Utilizando configuración personalizada desde: {}", configFile);
         }
         // Creación del pipeline
         Pipeline p = Pipeline.create(options);
-        runCassandraIngestionTask(p, options.getConfigFile());
+
+        /*ConnectionFactory connectionFactory = new ConnectionFactory();*/
+        runCassandraIngestionTask(p, options.getConfigFile(),options);
         p.run().waitUntilFinish();
     }
 
-    */
-
-    private static void runCassandraIngestionTask(Pipeline p, String configFile) throws Exception {
+    private static void runCassandraIngestionTask(Pipeline p, String configFile, IovationOptions options) throws Exception {
         JSONObject configJson = JsonUtils.readConfig(configFile);
         FilterEngineToCassandra filterEngine = new FilterEngineToCassandra(configJson);
 
         // Definición de parámetros
-        String BOOTSTRAP_SERVERS = "54.164.90.14:9092";
+        String BOOTSTRAP_SERVERS = filterEngine.getInputBroker();
         String INPUT_TOPIC = filterEngine.getInputTopic();
-        String CASSANDRA_NODES = filterEngine.getCassandraNodes();
         String CASSANDRA_KEYSPACE = filterEngine.getCassandraKeyspace();
         String CASSANDRA_TABLE = filterEngine.getCassandraTable();
 
@@ -92,9 +96,10 @@ public class IovationToCassandraApp {
         PCollection<String> filteredKafkaRecords = kafkaRecords.apply("FilterFields",
                 ParDo.of(new FilterAndTransformFn(configJsonString)));
 
-        // Escribir registros filtrados a Cassandra usando WriteToCassandraFn
-        filteredKafkaRecords.apply("WriteToCassandra",
-                ParDo.of(new WriteToCassandraFn(CASSANDRA_NODES, CASSANDRA_KEYSPACE, CASSANDRA_TABLE, configJsonString)));
+        // Escribir registros filtrados a Cassandra usando WriteToKeyspacesFn
+        filteredKafkaRecords.apply("WriteToKeyspaces",
+                ParDo.of(new WriteToKeyspacesFn(options, CASSANDRA_KEYSPACE, CASSANDRA_TABLE, configJsonString)));
+
 
     }
 
@@ -109,7 +114,7 @@ public class IovationToCassandraApp {
     // Esta DoFn específica filtra y transforma los registros de Kafka.
     static class FilterAndTransformFn extends DoFn<String, String> {
         private final String configJsonString;
-        private transient FilterEngineToCassandra filterEngine;
+        private transient FilterEngineToKeyspaces filterEngine;
 
         public FilterAndTransformFn(String configJsonString) {
             this.configJsonString = configJsonString;
@@ -117,7 +122,7 @@ public class IovationToCassandraApp {
         @Setup
         public void setup() {
             JSONObject configJson = new JSONObject(configJsonString);
-            filterEngine = new FilterEngineToCassandra(configJson);
+            filterEngine = new FilterEngineToKeyspaces(configJson);
         }
         @ProcessElement
         public void processElement(ProcessContext c) {
@@ -133,19 +138,15 @@ public class IovationToCassandraApp {
     }
 
     // Esta DoFn específica escribe registros filtrados en Cassandra.
-    static class WriteToCassandraFn extends DoFn<String, Void> {
-        private final String cassandraNodes;
+    static class WriteToKeyspacesFn extends DoFn<String, Void> {
+        private transient KeyspacesConnection keyspacesConnection;
         private final String cassandraKeyspace;
         private final String cassandraTable;
-
-        private transient CassandraConnection cassandraConnection;
-        private transient Session session;
-        private transient PreparedStatement preparedStatement;
-
+        private transient CqlSession session; // Cambia el tipo a CqlSession
+        private transient BoundStatement preparedStatement;
         private String configJsonString;
 
-        public WriteToCassandraFn(String cassandraNodes, String cassandraKeyspace, String cassandraTable, String configJsonString) {
-            this.cassandraNodes = cassandraNodes;
+        public WriteToKeyspacesFn(IovationOptions options, String cassandraKeyspace, String cassandraTable, String configJsonString) {
             this.cassandraKeyspace = cassandraKeyspace;
             this.cassandraTable = cassandraTable;
             this.configJsonString = configJsonString;
@@ -157,8 +158,8 @@ public class IovationToCassandraApp {
 
         @Setup
         public void setup() {
-            cassandraConnection = new CassandraConnection("54.152.221.55", 9042);
-            session = cassandraConnection.getSession();
+            keyspacesConnection = new KeyspacesConnection("AKIAWOPXRYYBROY5MYO6","adWnUDzu1/j22vUpq6lpFv6ZI69HW8w7Du2tlDoL",Region.US_EAST_1,cassandraKeyspace,"/config/cert/cassandra_truststore.jks");
+            session = keyspacesConnection.getSession();
 
             StringBuilder queryFields = new StringBuilder();
             StringBuilder queryValues = new StringBuilder();
@@ -168,7 +169,6 @@ public class IovationToCassandraApp {
                 queryFields.append(field).append(", ");
                 queryValues.append("?, ");
             }
-
             // Remover las comas y espacios adicionales al final
             queryFields.setLength(queryFields.length() - 2);
             queryValues.setLength(queryValues.length() - 2);
@@ -176,17 +176,18 @@ public class IovationToCassandraApp {
             String query = "INSERT INTO " + cassandraKeyspace + "." + cassandraTable + "(" + queryFields.toString() + ") " +
                     "VALUES (" + queryValues.toString() + ")";
 
-            log.info("*****INSERT TO CASSANDRA: {}", query);
-
-            preparedStatement = session.prepare(new SimpleStatement(query));
-        }
+            log.info("*****INSERT TO KEYSPACES: {}", query);
+            /*preparedStatement = session.prepare(new SimpleStatement(query));*/
+            // Ahora (en DataStax Cassandra Driver 4.x):
+            BoundStatementBuilder statementBuilder = session.prepare(query).boundStatementBuilder();
+            preparedStatement = statementBuilder.build();
+            }
 
         @ProcessElement
         public void processElement(ProcessContext c) {
             JSONObject filteredMessage = new JSONObject(c.element());
             log.info("Mensaje JSON procesado para Ingesta: {}", filteredMessage.toString());
-
-            BoundStatement boundStatement = preparedStatement.bind();
+            BoundStatement boundStatement = preparedStatement;
 
             // Mapeo del mensaje filtrado a los campos de Cassandra.
             for (String field : getConfigJson().getJSONObject("tableSchema").keySet()) {
@@ -194,7 +195,7 @@ public class IovationToCassandraApp {
                 if (value != null) {
                     switch (getConfigJson().getJSONObject("tableSchema").getString(field)) {
                         case "UUID":
-                            boundStatement = boundStatement.setUUID(field, UUID.fromString((String) value));
+                            boundStatement = boundStatement.setUuid(field, UUID.fromString((String) value));
                             break;
                         case "TEXT":
                             boundStatement = boundStatement.setString(field, (String) value);
@@ -202,7 +203,7 @@ public class IovationToCassandraApp {
                         case "INET":
                             try {
                                 InetAddress addressValue = InetAddress.getByName((String) value);
-                                boundStatement = boundStatement.setInet(field, addressValue);
+                                boundStatement = boundStatement.setInetAddress(field, addressValue);
                             } catch (UnknownHostException e) {
                                 log.error("Error al convertir la dirección IP: ", e);
                             }
@@ -212,20 +213,22 @@ public class IovationToCassandraApp {
             }
 
             try {
-                log.info("Ejecutando INSERT en Cassandra: {}", boundStatement.toString()); // Log para mostrar la operación de INSERT
+                log.info("Ejecutando INSERT en KEYSPACES: {}", boundStatement.toString()); // Log para mostrar la operación de INSERT
                 // Ahora ejecuta el boundStatement
-                session.execute(boundStatement);
+                // Ahora (en DataStax Cassandra Driver 4.x):
+                ResultSet resultSet;
+                resultSet = session.execute((Statement<?>) boundStatement.setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM));
             } catch (Exception e) {
-                log.error("Error al procesar y/o insertar el mensaje en Cassandra: ", e);
+                log.error("Error al procesar y/o insertar el mensaje en KEYSPACES: ", e);
             }
         }
-
 
         @Teardown
         public void teardown() {
-            if (cassandraConnection != null) {
-                cassandraConnection.close();
-            }
+            if(session != null && !session.isClosed()){
+                session.close();
+            }else{log.warn(" *** keyspaces session is null or already closed. ***");}
         }
     }
+
 }

@@ -7,9 +7,34 @@
       <option name="url" value="https://repo.maven.apache.org/maven2" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="maven8" />
+      <option name="name" value="maven8" />
+      <option name="url" value="https://mvnrepository.com/artifact/software.amazon.awssdk/sts" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven6" />
+      <option name="name" value="maven6" />
+      <option name="url" value="https://mvnrepository.com/artifact/software.aws.mcs/aws-sigv4-auth-cassandra-java-driver-plugin/" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="MavenRepo" />
       <option name="name" value="MavenRepo" />
       <option name="url" value="https://repo.maven.apache.org/maven2/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven3" />
+      <option name="name" value="maven3" />
+      <option name="url" value="https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-bundle" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven7" />
+      <option name="name" value="maven7" />
+      <option name="url" value="https://mvnrepository.com/artifact/javax.validation/validation-api" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven5" />
+      <option name="name" value="maven5" />
+      <option name="url" value="https://mvnrepository.com/artifact/software.amazon.awssdk/" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="central" />
@@ -30,6 +55,11 @@
       <option name="id" value="maven" />
       <option name="name" value="maven" />
       <option name="url" value="https://packages.confluent.io/maven" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven4" />
+      <option name="name" value="maven4" />
+      <option name="url" value="https://mvnrepository.com/artifact/software.amazon.awssdk/bom" />
     </remote-repository>
   </component>
 </project>

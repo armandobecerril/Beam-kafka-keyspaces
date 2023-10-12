@@ -1,0 +1,123 @@
+version: '3.7'
+
+services:
+  # Servicio de Flink JobManager
+  flink-jobmanager:
+    image: apache/flink:1.16.2-java11
+    ports:
+      - "8081:8081"
+      - "9142:9142"
+    command: jobmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+      - AWS_ACCESS_KEY_ID=AKIAWOPXRYYBROY5MYO6
+      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_REGION=us-east-1
+      - PEM_CERT_PATH=/certs/cert.pem
+      # Configuración SSL para el JobManager
+      - security.ssl.enabled=true
+      - security.ssl.key-store=/certs/cassandra_truststore.jks
+      - security.ssl.key-store-password=12345678
+    volumes:
+      - ./cassandra_truststore.jks:/certs/cassandra_truststore.jks
+      - ./cert-4I4LRTTUYC2QO6XGJHZVOSTN5TGGP3HG.pem:/certs/cert.pem
+      #- ./flink-conf.yaml:/opt/flink/conf/flink-conf.yaml
+    links:
+      - kafka
+    networks:
+      - mynetwork
+
+  # Servicio de Flink TaskManager 1
+  flink-taskmanager-1:
+    image: apache/flink:1.16.2-java11
+    depends_on:
+      - flink-jobmanager
+    command: taskmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+    networks:
+      - mynetwork
+
+  # Servicio de Flink TaskManager 2
+  flink-taskmanager-2:
+    image: apache/flink:1.16.2-java11
+    depends_on:
+      - flink-jobmanager
+    command: taskmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+    networks:
+      - mynetwork
+
+  # Servicio de Apache Beam Flink JobServer
+  beam-flink-jobserver:
+    image: apache/beam_flink1.16_job_server
+    ports:
+      - "8099:8099" # Asumiendo que el job server utiliza un puerto diferente; si no es así, cambia este valor
+    depends_on:
+      - flink-jobmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+    volumes:
+      - ./cassandra_truststore.jks:/certs/cassandra_truststore.jks
+      - ./cert-4I4LRTTUYC2QO6XGJHZVOSTN5TGGP3HG.pem:/certs/cert.pem
+    networks:
+      - mynetwork
+
+  # Servicio de Apache Beam SDK para Java
+  #beam-java-sdk:
+  #  image: apache/beam_java11_sdk:latest
+  #  command: ["/bin/bash"]
+
+  # Servicio de Apache Beam SDK para Python
+  #beam-python-sdk:
+  #  image: apache/beam_python3.7_sdk:2.25.0
+  #  command: ["/bin/bash"]
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:5.0.1
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      zk_id: "1"
+    ports:
+      - "2181:2181"
+    networks:
+      - mynetwork
+
+  kafka:
+    hostname: kafka
+    image: confluentinc/cp-kafka:5.0.1
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_HOST://localhost:9092,PLAINTEXT://kafka:9094
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CREATE_TOPICS: "enrichment.fct.iovation.v1"
+    depends_on:
+      - zookeeper
+    volumes:
+      - ./:/data
+      - ~/.aws:/root/.aws
+    networks:
+      - mynetwork
+
+  iovation-dummy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - kafka
+    networks:
+      - mynetwork
+    links:
+         - kafka
+
+networks:
+  mynetwork:

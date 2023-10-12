@@ -18,10 +18,28 @@ repositories {
     maven {
         url "https://oss.sonatype.org/content/repositories/releases/"
     }
+    maven {
+        url "https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-bundle"
+    }
+    maven {
+        url "https://mvnrepository.com/artifact/software.amazon.awssdk/bom"
+    }
+    maven {
+        url "https://mvnrepository.com/artifact/software.amazon.awssdk/"
+    }
+    maven {
+        url "https://mvnrepository.com/artifact/software.aws.mcs/aws-sigv4-auth-cassandra-java-driver-plugin/"
+    }
+    maven {
+        url "https://mvnrepository.com/artifact/javax.validation/validation-api"
+    }
+    maven {
+        url "https://mvnrepository.com/artifact/software.amazon.awssdk/sts"
+    }
 }
 
 application {
-    mainClass = 'com.realtime.pipelines.IovationToCassandraApp'
+    mainClass = 'com.realtime.pipelines.IovationToKeyspacesApp'
 }
 
 test {
@@ -47,21 +65,37 @@ dependencies {
     implementation "io.dropwizard.metrics:metrics-core:4.0.2"
     implementation "io.dropwizard.metrics:metrics-jmx:4.0.2"
     // SLF4J API
-    implementation 'org.slf4j:slf4j-api:1.7.32'
+    implementation "org.slf4j:slf4j-api:1.7.32"
     // Logback Classic (implements SLF4J)
-    implementation 'ch.qos.logback:logback-classic:1.2.6'
+    implementation "ch.qos.logback:logback-classic:1.2.6"
 
     // Tests dependencies.
     testImplementation "junit:junit:4.13.2"
-    testImplementation 'org.hamcrest:hamcrest:2.2'
-}
+    testImplementation "org.hamcrest:hamcrest:2.2"
 
+    // aws keyspaces (cassandra).
+    runtimeOnly platform ("software.amazon.awssdk:bom:2.20.159")
+    implementation "software.amazon.awssdk:keyspaces:2.20.159"
+    implementation "software.amazon.awssdk:auth:2.20.159"
+    implementation "com.amazonaws:aws-java-sdk-bundle:1.12.561"
+    implementation "software.aws.mcs:aws-sigv4-auth-cassandra-java-driver-plugin:4.0.9"
+    implementation "javax.validation:validation-api:2.0.0.Final"
+    testImplementation "software.amazon.awssdk:sts:2.20.159"
+    implementation "org.apache.beam:beam-sdks-java-io-kinesis:2.34.0"
+}
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
 // Package a self-contained jar file.
 jar {
-    archiveBaseName = 'pipelineIovationToCassandra'
+    //archiveBaseName = 'pipelineIovationToCassandra'
+    archiveBaseName = 'pipelineIovationToKeyspaces'
     destinationDirectory = file('build')
+    zip64 true
     manifest {
-        attributes 'Main-Class': 'com.realtime.pipelines.IovationToCassandraApp'
+        //attributes 'Main-Class': 'com.realtime.pipelines.IovationToCassandraApp'
+        attributes 'Main-Class': 'com.realtime.pipelines.IovationToKeyspacesApp'
     }
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'

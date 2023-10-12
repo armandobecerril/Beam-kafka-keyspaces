@@ -9,25 +9,24 @@ import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-public class FilterEngineToCassandra implements Serializable {
 
-    private static final Logger log = LoggerFactory.getLogger(FilterEngineToCassandra.class);
+public class FilterEngineToKeyspaces implements Serializable {
+
+    private static final Logger log = LoggerFactory.getLogger(FilterEngineToKeyspaces.class);
 
     private JSONObject config;
-    private String inputBroker;
     private String inputTopic;
     private String cassandraNodes;
     private String cassandraKeyspace;
     private String cassandraTable;
     private List<String> fields;
 
-    public FilterEngineToCassandra(JSONObject configJson) {
+    public FilterEngineToKeyspaces(JSONObject configJson) {
 
         this.config = configJson;
 
-        this.inputBroker = config.getString("inputBroker");
         this.inputTopic = config.getString("inputTopic");
-        this.cassandraNodes = config.getString("cassandraNodes");
+        /*this.cassandraNodes = config.getString("cassandraNodes");*/
         this.cassandraKeyspace = config.getString("cassandraKeyspace");
         this.cassandraTable = config.getString("cassandraTable");
 
@@ -54,10 +53,6 @@ public class FilterEngineToCassandra implements Serializable {
 
         return "INSERT INTO " + cassandraTable + "(" + queryFields.toString() + ") " +
                 "VALUES (" + queryValues.toString() + ")";
-    }
-
-    public String getInputBroker() {
-        return inputBroker;
     }
 
     public String getInputTopic() {

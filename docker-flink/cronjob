@@ -1,0 +1,5 @@
+# cronjob file for iovation-cron
+
+PYTHONPATH=/usr/local/lib/python3.8/site-packages
+* * * * * python3 /app/iovationDummy.py >> /var/log/cronjob.log 2>&1
+

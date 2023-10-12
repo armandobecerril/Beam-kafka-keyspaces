@@ -1,4 +1,4 @@
-# Apache Beam Kafka Ingest to Cassandra
+# Apache Beam Kafka Ingest to Keyspaces
 
 If you want to clone this repository to start your own project,
 you can choose the license you prefer and feel free to delete anything related to the license you are dropping.
@@ -22,7 +22,7 @@ This is a very basic Apache Beam project to help you get started.
 
 There are only two source files:
 
-* [`src/main/java/com/realtime/pipelines/IovationToCassandraApp.java`](src/main/java/com/realtime/pipelines/IovationToCassandraApp.java): the application source file, containing the [`main` method](src/main/java/com/example/App.java). The _main class_ is `com.realtime.pipelines.IovationToCassandraApp`.
+* [`src/main/java/com/realtime/pipelines/IovationToKeyspacesApp.java`](src/main/java/com/realtime/pipelines/IovationToCassandraApp.java): the application source file, containing the [`main` method](src/main/java/com/example/App.java). The _main class_ is `com.realtime.pipelines.IovationToCassandraApp`.
 
 > ℹ️ Most build tools expect all the Java source files to be under `src/main/java/` and tests to be under `src/test/java/` by default.
 
@@ -56,11 +56,11 @@ To build a self-contained jar file, we need to configure the [`jar`](https://doc
 gradle jar
 
 # Run the jar application.
-java -jar build/pipelineIovationToCassandra.jar --configFile="<ingestConfigurationFile>"
+java -jar build/pipelineIovationToKeyspaces.jar --configFile="<ingestConfigurationFile>"
 ```
 
 # Deployment Application on Apache Flink
-* [`Docker Flink/docker-compose.yml`](Docker Flink/docker-compose.yml)
+* [`Docker Flink/docker-compose.yml`](docker-flink/docker-compose.yml)
 ```
 docker-compose up
 ```
@@ -73,7 +73,6 @@ docker-compose up
 ```
 {
   "inputTopic": "enrichment.fct.iovation.v1",
-  "cassandraNodes": "cassandra://54.152.221.55:9042",
   "cassandraKeyspace": "iovation_data_source",
   "cassandraTable": "iovation_default",
   "fields": [
@@ -121,7 +120,7 @@ To build a self-contained jar file, we need to import [`sbt-assembly`](https://g
 sbt assembly
 
 # Run the jar application.
-java -jar build/pipelineIovationToCassandra.jar --configFile="data_pipeline_config.json"
+java -jar build/pipelineIovationToKeyspaces.jar --configFile="data_pipeline_config.json"
 ```
 
 ### Option C: Apache Maven
@@ -160,7 +159,7 @@ To build a self-contained jar file, we need to configure [`maven-assembly-plugin
 mvn package
 
 # Run the jar application.
-java -jar target/beam-kafka-cassandra-1-jar-with-dependencies.jar --configFile="<ingestConfigurationFile>"
+java -jar target/beam-kafka-keyspaces-1-jar-with-dependencies.jar --configFile="<ingestConfigurationFile>"
 ```
 
 # License

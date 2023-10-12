@@ -13,7 +13,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.realtime.pipelines</groupId>
-  <artifactId>beam-kafka-cassandra</artifactId>
+  <artifactId>beam-kafka-keyspaces</artifactId>
   <version>1</version>
 
   <properties>
@@ -196,6 +196,44 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>1.2.6</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-bundle</artifactId>
+      <version>1.12.561</version>
+    </dependency>
+
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>bom</artifactId>
+      <version>2.20.159</version>
+      <type>pom</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>software.aws.mcs</groupId>
+      <artifactId>aws-sigv4-auth-cassandra-java-driver-plugin</artifactId>
+      <version>4.0.6</version>
+    </dependency>
+
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>auth</artifactId>
+      <version>2.20.159</version>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <version>2.0.0.Final</version>
+    </dependency>
+
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>sts</artifactId>
+      <version>2.20.159</version>
     </dependency>
 
 

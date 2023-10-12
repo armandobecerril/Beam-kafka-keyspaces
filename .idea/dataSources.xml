@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:cassandra://54.152.221.55:9042</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="keyspaces" uuid="524dfcd0-fa8d-4e34-acb4-e4b349d1d57e">
+      <driver-ref>cassandra</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.dbschema.CassandraJdbcDriver</jdbc-driver>
+      <jdbc-url>jdbc:cassandra://cassandra.us-east-1.amazonaws.com:9142</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>
