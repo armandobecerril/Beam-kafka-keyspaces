@@ -158,7 +158,7 @@ public class IovationToKeyspacesApp {
 
         @Setup
         public void setup() {
-            keyspacesConnection = new KeyspacesConnection("AKIAWOPXRYYBROY5MYO6","adWnUDzu1/j22vUpq6lpFv6ZI69HW8w7Du2tlDoL",Region.US_EAST_1,cassandraKeyspace,"/config/cert/cassandra_truststore.jks");
+            keyspacesConnection = new KeyspacesConnection("","",Region.US_EAST_1,cassandraKeyspace,"/config/cert/cassandra_truststore.jks");
             session = keyspacesConnection.getSession();
 
             StringBuilder queryFields = new StringBuilder();
