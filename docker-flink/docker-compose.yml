@@ -10,8 +10,8 @@ services:
     command: jobmanager
     environment:
       - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
-      - AWS_ACCESS_KEY_ID=AKIAWOPXRYYBROY5MYO6
-      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_ACCESS_KEY_ID=
+      - AWS_SECRET_ACCESS_KEY=adWnUDzu1/
       - AWS_REGION=us-east-1
       - PEM_CERT_PATH=/certs/cert.pem
       # Configuración SSL para el JobManager
