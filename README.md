@@ -60,13 +60,15 @@ java -jar build/pipelineIovationToKeyspaces.jar --configFile="<ingestConfigurati
 ```
 
 # Deployment Application on Apache Flink
-* [`Docker Flink/docker-compose.yml`](docker-flink/docker-compose.yml)
+* [`DBeam-kafka-keyspaces/docker-flink/docker-compose.yml`](Beam-kafka-keyspaces/docker-flink/docker-compose.yml)
+```
+docker-compose build
+```
 ```
 docker-compose up
 ```
 
-# Submit Real Time Application (jar) on Apache Flink
-![img.png](img.png)
+
 
 # Test Different Ingestion Process from Kafka to Cassandra
 * [`resources/config/ingestConfigurationFile.json`](resources/config)
@@ -120,7 +122,7 @@ To build a self-contained jar file, we need to import [`sbt-assembly`](https://g
 sbt assembly
 
 # Run the jar application.
-java -jar build/pipelineIovationToKeyspaces.jar --configFile="data_pipeline_config.json"
+java -jar build/pipelineIovationToKeyspaces.jar --configFile="/config/data_ingest_table2_demo.json"
 ```
 
 ### Option C: Apache Maven
