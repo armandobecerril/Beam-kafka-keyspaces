@@ -59,7 +59,7 @@ gradle jar
 java -jar build/pipelineIovationToKeyspaces.jar --configFile="<ingestConfigurationFile>"
 ```
 
-# Deployment Application on Apache Flink
+# Deployment Application with Kafka and Dummy producer
 * [`DBeam-kafka-keyspaces/docker-flink/docker-compose.yml`](Beam-kafka-keyspaces/docker-flink/docker-compose.yml)
 ```
 docker-compose build
