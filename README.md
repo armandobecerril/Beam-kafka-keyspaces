@@ -70,7 +70,7 @@ docker-compose up
 
 
 
-# Test Different Ingestion Process from Kafka to Cassandra
+# Test Different Ingestion Process from Kafka to Keyspaces
 * [`resources/config/ingestConfigurationFile.json`](resources/config)
 ```
 {
